@@ -10,17 +10,20 @@ For text containing no CJK characters, tokenization is identical to before, and 
 
 ## Install
 
-This package can replace the `session-query-sqlite` row directly and accepts the same configuration (`path`, `openAt`, limits). After installing it into your profile, redirect that row to it inside your profile's `cordis.patch.yml`:
+It takes the same configuration as the `session-query-sqlite` row (`path`, `openAt`, limits) and provides the same `sessionQuery` service. Install it into your profile (for example `dsh plugin --profile web add <tarball URL>`), then, in the profile's `cordis.patch.yml`, switch the stock row off and add this one in its place. A patch can't rename an existing row, so it gets a new id:
 
 ```yaml
 - id: session-query-sqlite
-  name: '@soffits/dsh-session-query-cjk'
-  config:
-    path: /absolute/path/to/session-search/index.sqlite
-    openAt: first-search
+  disabled: true
+- insert:
+    - id: session-query-cjk
+      name: '@soffits/dsh-session-query-cjk'
+      config:
+        path: /absolute/path/to/session-search/index.sqlite
+        openAt: first-search
 ```
 
-Because a patch replaces the entire `config`, repeat all of it as you use it. Tarballs for each release can be found on the [releases page](https://github.com/soffits/dsh-session-query-cjk/releases).
+Use the same `config` you had on the stock row, so the same index file is reused. Release tarballs are on the [releases page](https://github.com/soffits/dsh-session-query-cjk/releases). Restart DSH afterwards.
 
 Keeping an existing index file is acceptable: its schema version is not the same as upstream's, so the first time it is opened, the derived tables are discarded and reconstructed from the session logs—the identical reset procedure upstream applies when its own schema changes. Returning to the upstream package causes a rebuild in the opposite direction. Session logs are accessed in read-only fashion.
 
