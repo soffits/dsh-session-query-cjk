@@ -1,5 +1,6 @@
 {
   "meta": {
-    "title": "session-query-sqlite"
+    "title": "Session search (CJK)",
+    "description": "Session records and SQLite full-text search that also finds Chinese, Japanese and Korean words inside sentences."
   }
 }
