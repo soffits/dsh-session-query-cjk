@@ -1,16 +1,16 @@
 # dsh-session-query-cjk
 
-A session search extension for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) capable of locating Chinese, Japanese, and Korean terms within sentences.
+Session search in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) that finds words in Chinese, Japanese, and Korean inside a sentence.
 
-Messages are indexed by DSH's built-in `@deepseek-ai/dsh-session-query-sqlite` through the `unicode61` tokenizer of SQLite FTS5. With that tokenizer, an entire uninterrupted sequence of Han or kana becomes a single token; as a result, `鸡蛋` can never match `今天去超市买了鸡蛋和牛奶`, and only a run bounded exactly by punctuation will. An English word attached to Chinese behaves the same way, such as `Python` in `用Python写脚本`. This behavior is covered in discussions [#1999](https://github.com/deepseek-ai/deepseek-harness/discussions/1999) and [#9064](https://github.com/deepseek-ai/deepseek-harness/discussions/9064).
+DSH's built-in search, `@deepseek-ai/dsh-session-query-sqlite`, indexes messages with the `unicode61` tokenizer from SQLite FTS5. For that tokenizer, any unbroken run of kana or Han characters is one token. That means `鸡蛋` never matches `今天去超市买了鸡蛋和牛奶`; you get a hit only when punctuation happens to break the run at precisely the right place. An English word glued to Chinese hits the same wall, as `Python` does in `用Python写脚本`. It has come up in discussions [#1999](https://github.com/deepseek-ai/deepseek-harness/discussions/1999) and [#9064](https://github.com/deepseek-ai/deepseek-harness/discussions/9064).
 
-One modification distinguishes this package from the upstream provider: a reserved separator is inserted around each CJK code point before text enters the index and before a query reaches `MATCH`, making every such code point a separate token. Queries already arrive as a single quoted phrase, and an FTS5 phrase requires its tokens to be adjacent and in order; consequently, any CJK substring can now match—whether one character, two (`房租`), or an entire sentence. `蛋鸡` continues not to match `鸡蛋`. The separator is removed again from snippets, leaving the original text visible in results.
+This package changes one thing. Before text goes into the index and before a query reaches `MATCH`, it puts a reserved separator around each CJK character, which makes every character a token of its own. A query arrives as one quoted phrase; FTS5 requires the tokens in a phrase to sit next to each other in order, so any CJK substring now matches: a single character, two characters (`房租`), or an entire sentence. `蛋鸡` still won't match `鸡蛋`. The separator is stripped from snippets again, so results display the original text.
 
-For text containing no CJK characters, tokenization is identical to before, and the test suite from upstream at the same version still passes without modification. English-language results are additionally compared directly with the upstream package by the tests included here.
+Text with no CJK is tokenized exactly as it was before. The upstream test suite for that version passes unchanged, and this package's tests compare English results directly with the upstream package too.
 
 ## Install
 
-It takes the same configuration as the `session-query-sqlite` row (`path`, `openAt`, limits) and provides the same `sessionQuery` service. Install it into your profile (for example `dsh plugin --profile web add <tarball URL>`), then, in the profile's `cordis.patch.yml`, switch the stock row off and add this one in its place. A patch can't rename an existing row, so it gets a new id:
+It takes the same config as the `session-query-sqlite` row (`path`, `openAt`, limits) and provides the exact same `sessionQuery` service. Add it to your profile (for instance, `dsh plugin --profile web add <tarball URL>`), then disable the stock row for that profile in its `cordis.patch.yml` and put this row where it was. A patch can't rename an existing row, so this row must have an id of its own:
 
 ```yaml
 - id: session-query-sqlite
@@ -23,15 +23,15 @@ It takes the same configuration as the `session-query-sqlite` row (`path`, `open
         openAt: first-search
 ```
 
-Use the same `config` you had on the stock row, so the same index file is reused. Release tarballs are on the [releases page](https://github.com/soffits/dsh-session-query-cjk/releases). Restart DSH afterwards.
+Carry the `config` over from that stock row so it uses the same index file. Release tarballs are on the [releases page](https://github.com/soffits/dsh-session-query-cjk/releases). Then restart DSH.
 
-Keeping an existing index file is acceptable: its schema version is not the same as upstream's, so the first time it is opened, the derived tables are discarded and reconstructed from the session logs—the identical reset procedure upstream applies when its own schema changes. Returning to the upstream package causes a rebuild in the opposite direction. Session logs are accessed in read-only fashion.
+You can keep your current index file. It has a different schema version from upstream, so the first time it opens, it drops the derived tables and rebuilds them from the session logs. Upstream does that same reset whenever its schema changes. If you go back to the upstream package, the tables get rebuilt the other way. The session logs stay read-only.
 
 ## Limits
 
-- Since matching works by substring, a CJK query can also cross punctuation (`鸡蛋` matches `鸡，蛋`), just as `alpha beta` matches `alpha, beta` in the upstream package.
-- No support exists for Thai, Lao, Khmer, or Burmese; those languages require a dictionary-based segmenter.
-- Every version is based on a single upstream release and requires the corresponding DSH version: the first release built on `0.2.2-rc.1` is `0.2.2-rc.1.1`.
+- Substring matching means a CJK query can also match across punctuation (`鸡蛋` matches `鸡，蛋`), just as upstream lets `alpha beta` match `alpha, beta`.
+- This package doesn't handle Thai, Lao, Khmer, or Burmese; those languages need a dictionary-based segmenter.
+- Each version targets one upstream release and needs the DSH version that matches it: for `0.2.2-rc.1`, the first release is `0.2.2-rc.1.1`.
 
 ## Development
 
@@ -42,4 +42,4 @@ npm test
 
 ## License
 
-MIT. Derived from `@deepseek-ai/dsh-session-query-sqlite` (MIT, Copyright (c) 2026 DeepSeek); refer to LICENSE.
+MIT. Derived from `@deepseek-ai/dsh-session-query-sqlite` (MIT, Copyright (c) 2026 DeepSeek); see LICENSE.
