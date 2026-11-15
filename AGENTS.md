@@ -25,3 +25,7 @@ The patch, all in `lib/index.js`:
 2. Otherwise commit the new upstream files unchanged first, then re-apply the patch above (if upstream changed its schema version, use `1000000 + <upstream schema> * 1000 + 1`).
 3. `npm test` and `npm run test:upstream` (upstream's `tests/sqlite.spec.ts` for that tag, run with vitest against this `lib/index.js`); both must pass in full.
 4. Bump `engines.dsh`.
+
+## Git
+
+- PR titles are Conventional Commit subjects (`feat: ...`, `fix(scope): ...`), because a squash merge makes the title the commit on the default branch; CI checks it.
